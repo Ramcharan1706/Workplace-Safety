@@ -123,3 +123,5 @@ See training/README.md for full steps.
 
 - For accurate helmet and vest detection, use a PPE-trained YOLO model.
 - Default runtime model path is configurable in config.py.
+- Streamlit Cloud deployment uses `runtime.txt` to pin Python 3.11. This avoids binary wheel issues on newer Python versions.
+- Server deployments should use `opencv-python-headless` (already set in `requirements.txt`) instead of GUI OpenCV packages.
