@@ -1,0 +1,14 @@
+numpy
+opencv-python
+scikit-learn
+scikit-image
+matplotlib
+seaborn
+Pillow
+joblib
+ultralytics
+streamlit
+pandas
+fastapi
+uvicorn[standard]
+python-multipart
