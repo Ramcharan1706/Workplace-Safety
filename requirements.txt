@@ -1,5 +1,7 @@
 numpy
-opencv-python-headless
+# Use opencv-python for local development with camera access
+# Use opencv-python-headless for production/headless servers
+opencv-python>=4.8.0
 scikit-learn
 scikit-image
 matplotlib

@@ -21,9 +21,35 @@ class SafetyPipeline:
         detections = self.detector.detect(frame_bgr)
 
         persons = [item for item in detections if item.label == "person"]
-        helmets = [item for item in detections if item.label in {"helmet", "hardhat"}]
-        vests = [item for item in detections if item.label in {"vest", "safety_vest"}]
-        machinery = [item for item in detections if item.label in {"machinery", "forklift", "truck", "excavator"}]
+        
+        # Include all helmet colors and variants
+        helmet_classes = {
+            "helmet", "hardhat",
+            "yellow_helmet", "white_helmet", "red_helmet", "orange_helmet",
+            "blue_helmet", "pink_helmet", "green_helmet", "black_helmet", "grey_helmet",
+            "yellow_hardhat", "white_hardhat", "red_hardhat", "orange_hardhat",
+            "blue_hardhat", "green_hardhat", "black_hardhat",
+        }
+        helmets = [item for item in detections if item.label in helmet_classes]
+        
+        # Include all vest colors and variants
+        vest_classes = {
+            "vest", "safety_vest", "safety_jacket",
+            "orange_vest", "yellow_vest", "white_vest", "red_vest", "green_vest",
+            "orange_safety_vest", "yellow_safety_vest", "white_safety_vest",
+            "reflective_vest", "high_visibility_vest", "reflective_jacket",
+        }
+        vests = [item for item in detections if item.label in vest_classes]
+        
+        # Include all machinery types and equipment
+        machinery_classes = {
+            "machinery", "forklift", "truck", "excavator",
+            "bulldozer", "loader", "crane", "boom_lift",
+            "scissor_lift", "cherry_picker", "man_lift", "pallet_jack",
+            "conveyor", "drill_press", "welding_machine", "circular_saw",
+            "scaffolding", "ladder", "guardrail", "safety_barrier",
+        }
+        machinery = [item for item in detections if item.label in machinery_classes]
 
         assessments: list[PersonAssessment] = []
         violations: list[ViolationEvent] = []

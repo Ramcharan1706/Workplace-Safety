@@ -39,46 +39,103 @@ def inject_streamlit_theme() -> None:
     st.markdown(
         """
         <style>
+            :root {
+                --primary: #0f172a;
+                --secondary: #1e293b;
+                --accent: #3b82f6;
+                --success: #10b981;
+                --warning: #f59e0b;
+                --danger: #ef4444;
+            }
+            
             .stApp {
-                background:
-                    radial-gradient(circle at 8% 10%, #dff5ff 0%, transparent 28%),
-                    radial-gradient(circle at 90% 0%, #ffe7cf 0%, transparent 24%),
-                    linear-gradient(145deg, #f5fbff 0%, #eaf3fb 50%, #e5eef7 100%);
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             }
+            
+            .stSidebar {
+                background: linear-gradient(180deg, #1e293b 0%, #334155 100%);
+            }
+            
+            .metric-card {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+                border: 1px solid rgba(59, 130, 246, 0.2);
+                border-radius: 12px;
+                padding: 1.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            
+            .status-safe {
+                color: #10b981;
+                font-weight: 700;
+            }
+            
+            .status-warning {
+                color: #f59e0b;
+                font-weight: 700;
+            }
+            
+            .status-danger {
+                color: #ef4444;
+                font-weight: 700;
+            }
+            
             .hero-wrap {
-                border: 1px solid rgba(255,255,255,0.55);
-                background: linear-gradient(160deg, rgba(255,255,255,0.66), rgba(255,255,255,0.26));
-                border-radius: 18px;
-                padding: 0.9rem 1rem;
-                box-shadow: 0 14px 34px rgba(20, 48, 78, 0.12);
-                margin-bottom: 0.8rem;
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+                border: 2px solid rgba(59, 130, 246, 0.3);
+                border-radius: 16px;
+                padding: 2rem;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+                margin-bottom: 1.5rem;
             }
+            
             .hero-title {
                 margin: 0;
-                color: #15314c;
-                font-weight: 800;
-                letter-spacing: 0.02em;
+                color: #f1f5f9;
+                font-weight: 900;
+                font-size: 2.5rem;
+                letter-spacing: -0.02em;
+                background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
+            
             .hero-sub {
-                margin: 0.2rem 0 0;
-                color: #355875;
-                font-size: 0.92rem;
+                margin: 0.8rem 0 0;
+                color: #cbd5e1;
+                font-size: 1rem;
+                font-weight: 500;
             }
+            
             .mini-chip {
                 display: inline-block;
-                padding: 0.28rem 0.62rem;
-                border-radius: 999px;
-                background: rgba(14, 156, 180, 0.16);
-                border: 1px solid rgba(14, 156, 180, 0.32);
-                color: #165f74;
-                font-size: 0.72rem;
+                padding: 0.4rem 0.8rem;
+                border-radius: 8px;
+                background: linear-gradient(135deg, #3b82f6, #10b981);
+                border: none;
+                color: #fff;
+                font-size: 0.75rem;
                 font-weight: 700;
-                margin-top: 0.45rem;
+                margin-top: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
             }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+
+def validate_model_path(model_path: str) -> bool:
+    """Validate that required model file exists before app startup."""
+    model_file = Path(model_path)
+    if model_file.exists():
+        return True
+    # Try relative to current directory
+    if Path(model_path).resolve().exists():
+        return True
+    return False
 
 
 def render_streamlit_frontend(summary_history: list[dict]) -> None:
@@ -90,18 +147,49 @@ def render_streamlit_frontend(summary_history: list[dict]) -> None:
     st.markdown(
         """
         <div class="hero-wrap">
-            <h2 class="hero-title">AI Workplace Safety Monitoring</h2>
-            <p class="hero-sub">Live detection, explainable risk scoring, and operational analytics in one Streamlit dashboard.</p>
-            <span class="mini-chip">Streamlit Frontend Active</span>
+            <h2 class="hero-title">🛡️ Workplace Safety AI</h2>
+            <p class="hero-sub">Real-time detection • Explainable scoring • Operational analytics</p>
+            <span class="mini-chip">Live Monitoring Active</span>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Workers Seen", workers)
-    c2.metric("Violations", violations)
-    c3.metric("Compliance", f"{compliance:.2f}%")
+    col1, col2, col3 = st.columns(3, gap="medium")
+    with col1:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">👷 Workers Detected</div>
+                <div style="color: #3b82f6; font-size: 2.5rem; font-weight: 900; margin-top: 0.5rem;">{workers}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col2:
+        violation_color = "#ef4444" if violations > 0 else "#10b981"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">⚠️ Violations</div>
+                <div style="color: {violation_color}; font-size: 2.5rem; font-weight: 900; margin-top: 0.5rem;">{violations}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col3:
+        compliance_color = "#ef4444" if compliance < 50 else "#f59e0b" if compliance < 80 else "#10b981"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">✓ Compliance</div>
+                <div style="color: {compliance_color}; font-size: 2.5rem; font-weight: 900; margin-top: 0.5rem;">{compliance:.1f}%</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def _to_checkup_row(result, item) -> dict:
@@ -322,20 +410,60 @@ def run_image_monitoring(
 
 
 def render_analytics(summary: dict) -> None:
-    st.subheader("Analytics Dashboard")
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Workers", summary.get("total_workers_detected", 0))
-    col2.metric("Total Violations", summary.get("total_violations", 0))
-    col3.metric("Compliance Rate", f"{summary.get('compliance_rate', 0.0) * 100:.2f}%")
+    st.markdown("<h2 style='color: #f1f5f9; margin-top: 2rem;'>📊 Safety Analytics</h2>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3, gap="medium")
+    with col1:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">👷 Total Workers</div>
+                <div style="color: #3b82f6; font-size: 2rem; font-weight: 900; margin-top: 0.5rem;">{summary.get('total_workers_detected', 0)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col2:
+        violations = summary.get("total_violations", 0)
+        violation_color = "#ef4444" if violations > 0 else "#10b981"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">⚠️ Total Violations</div>
+                <div style="color: {violation_color}; font-size: 2rem; font-weight: 900; margin-top: 0.5rem;">{violations}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    
+    with col3:
+        compliance = summary.get('compliance_rate', 0.0) * 100
+        compliance_color = "#ef4444" if compliance < 50 else "#f59e0b" if compliance < 80 else "#10b981"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">✓ Compliance Rate</div>
+                <div style="color: {compliance_color}; font-size: 2rem; font-weight: 900; margin-top: 0.5rem;">{compliance:.1f}%</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
+    st.markdown("<h3 style='color: #cbd5e1; margin-top: 1.5rem;'>Violation Breakdown</h3>", unsafe_allow_html=True)
     fig_dist = make_violation_figure(summary.get("violation_distribution", {}))
     st.pyplot(fig_dist, use_container_width=True)
 
-    fig_score = make_trend_figure(summary.get("score_trend", []), "Safety Score Trend", "Average Safety Score")
-    st.pyplot(fig_score, use_container_width=True)
+    col_trend1, col_trend2 = st.columns(2, gap="medium")
+    with col_trend1:
+        st.markdown("<h3 style='color: #cbd5e1;'>Safety Score Trend</h3>", unsafe_allow_html=True)
+        fig_score = make_trend_figure(summary.get("score_trend", []), "Safety Score Over Time", "Average Safety Score")
+        st.pyplot(fig_score, use_container_width=True)
 
-    fig_compliance = make_trend_figure(summary.get("compliance_trend", []), "Compliance Trend", "Compliance Rate")
-    st.pyplot(fig_compliance, use_container_width=True)
+    with col_trend2:
+        st.markdown("<h3 style='color: #cbd5e1;'>Compliance Trend</h3>", unsafe_allow_html=True)
+        fig_compliance = make_trend_figure(summary.get("compliance_trend", []), "Compliance Over Time", "Compliance Rate")
+        st.pyplot(fig_compliance, use_container_width=True)
 
     st.subheader("Helmet, Vest, and Machinery Checkups")
     k1, k2, k3, k4 = st.columns(4)
@@ -352,6 +480,14 @@ def render_checkup_table(checkup_rows: list[dict]) -> None:
         return
 
     rows = pd.DataFrame(checkup_rows)
+    
+    # Validate required columns exist
+    required_cols = {"status", "machinery_risk", "person_id", "reason", "timestamp", "camera_id"}
+    missing_cols = required_cols - set(rows.columns)
+    if missing_cols:
+        st.error(f"Dataset is missing required columns: {missing_cols}")
+        return
+    
     col1, col2, col3 = st.columns([1.2, 1.2, 2.0])
     status_filter = col1.selectbox("Status Filter", ["All", "Safe", "Warning", "Unsafe", "Dangerous"], key="check_status_filter")
     danger_only = col2.checkbox("Show Machinery Danger Only", value=False, key="check_danger_only")
@@ -485,56 +621,60 @@ def app() -> None:
     start_clicked = st.sidebar.button("Start Monitoring")
 
     if start_clicked:
-        with st.spinner("Loading model and processing live frames..."):
-            pipeline = build_pipeline(model_path=model_path, conf=conf, iou=iou)
-            detector = pipeline.detector
-            available_classes_fn = getattr(detector, "available_classes", None)
-            if callable(available_classes_fn):
-                available_classes = available_classes_fn()
-            else:
-                raw_names = getattr(detector, "_names", {}) or {}
-                normalize_fn = getattr(detector, "_normalize_label", lambda x: str(x).strip().lower())
-                available_classes = sorted({normalize_fn(str(name)) for name in raw_names.values()})
-            missing_checks = []
-            if not detector.supports_any_class({"helmet", "hardhat", "hard_hat"}):
-                missing_checks.append("helmet")
-            if not detector.supports_any_class({"vest", "safety_vest", "safety-vest"}):
-                missing_checks.append("vest")
-            if missing_checks:
-                st.warning(
-                    "Current model does not include PPE classes for: "
-                    + ", ".join(missing_checks)
-                    + ". PPE checks for those classes are skipped to avoid false violations."
-                )
-                if available_classes:
-                    display_classes = ", ".join(available_classes[:20])
-                    suffix = " ..." if len(available_classes) > 20 else ""
-                    st.caption(f"Model classes detected: {display_classes}{suffix}")
-                if set(missing_checks) == {"helmet", "vest"}:
-                    st.info(
-                        "This usually means the selected model is a generic detector (for example COCO). "
-                        "Use a PPE-trained YOLO model (best.pt) that includes helmet and vest classes."
+        # Validate model path early
+        if not validate_model_path(model_path):
+            st.error(f"Model file not found: {model_path}. Please check the path and try again.")
+        else:
+            with st.spinner("Loading model and processing live frames..."):
+                pipeline = build_pipeline(model_path=model_path, conf=conf, iou=iou)
+                detector = pipeline.detector
+                available_classes_fn = getattr(detector, "available_classes", None)
+                if callable(available_classes_fn):
+                    available_classes = available_classes_fn()
+                else:
+                    raw_names = getattr(detector, "_names", {}) or {}
+                    normalize_fn = getattr(detector, "_normalize_label", lambda x: str(x).strip().lower())
+                    available_classes = sorted({normalize_fn(str(name)) for name in raw_names.values()})
+                missing_checks = []
+                if not detector.supports_any_class({"helmet", "hardhat", "hard_hat"}):
+                    missing_checks.append("helmet")
+                if not detector.supports_any_class({"vest", "safety_vest", "safety-vest"}):
+                    missing_checks.append("vest")
+                if missing_checks:
+                    st.warning(
+                        "Current model does not include PPE classes for: "
+                        + ", ".join(missing_checks)
+                        + ". PPE checks for those classes are skipped to avoid false violations."
                     )
-            alert_manager = AlertManager(sound_enabled=sound_enabled)
-            if mode == "images":
-                summary = run_image_monitoring(
-                    pipeline=pipeline,
-                    image_items=image_items,
-                    alert_manager=alert_manager,
-                )
-            else:
-                summary = run_monitoring(
-                    pipeline=pipeline,
-                    mode=mode,
-                    video_path=video_path,
-                    camera_count=camera_count,
-                    seconds=seconds,
-                    alert_manager=alert_manager,
-                )
+                    if available_classes:
+                        display_classes = ", ".join(available_classes[:20])
+                        suffix = " ..." if len(available_classes) > 20 else ""
+                        st.caption(f"Model classes detected: {display_classes}{suffix}")
+                    if set(missing_checks) == {"helmet", "vest"}:
+                        st.info(
+                            "This usually means the selected model is a generic detector (for example COCO). "
+                            "Use a PPE-trained YOLO model (best.pt) that includes helmet and vest classes."
+                        )
+                alert_manager = AlertManager(sound_enabled=sound_enabled)
+                if mode == "images":
+                    summary = run_image_monitoring(
+                        pipeline=pipeline,
+                        image_items=image_items,
+                        alert_manager=alert_manager,
+                    )
+                else:
+                    summary = run_monitoring(
+                        pipeline=pipeline,
+                        mode=mode,
+                        video_path=video_path,
+                        camera_count=camera_count,
+                        seconds=seconds,
+                        alert_manager=alert_manager,
+                    )
 
-        if summary is not None:
-            st.session_state["summary_history"].append(summary)
-            st.session_state["last_checkup_rows"] = summary.get("checkup_rows", [])
+                if summary is not None:
+                    st.session_state["summary_history"].append(summary)
+                    st.session_state["last_checkup_rows"] = summary.get("checkup_rows", [])
             render_analytics(summary)
 
             export_path = export_summary_to_csv(summary, SUMMARY_CSV)

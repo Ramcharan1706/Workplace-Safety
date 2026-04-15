@@ -20,27 +20,59 @@ class YoloDetector:
     """Thin wrapper around Ultralytics YOLO with normalized output records."""
 
     _ALIASES: dict[str, str] = {
-        # Helmet aliases
+        # Helmet aliases - all colors
         "hard_hat": "hardhat",
         "hardhats": "hardhat",
         "hard_hats": "hardhat",
         "safety_helmet": "helmet",
         "safetyhelm": "helmet",
         "helmets": "helmet",
-        # Vest aliases
+        # Color-specific helmet mappings
+        "yellow_hard_hat": "yellow_helmet",
+        "white_hard_hat": "white_helmet",
+        "red_hard_hat": "red_helmet",
+        "orange_hard_hat": "orange_helmet",
+        "blue_hard_hat": "blue_helmet",
+        "green_hard_hat": "green_helmet",
+        "black_hard_hat": "black_helmet",
+        "grey_hard_hat": "grey_helmet",
+        # Vest aliases - all colors
         "safety_vest": "safety_vest",
         "safetyvest": "safety_vest",
         "safety_jacket": "safety_vest",
-        "hi_vis": "safety_vest",
-        "hi_vis_vest": "safety_vest",
-        "high_visibility_vest": "safety_vest",
-        "reflective_vest": "safety_vest",
-        "reflective_jacket": "safety_vest",
+        "hi_vis": "orange_vest",
+        "hi_vis_vest": "orange_vest",
+        "high_visibility_vest": "orange_vest",
+        "high_vis": "orange_vest",
+        "reflective_vest": "reflective_vest",
+        "reflective_jacket": "reflective_jacket",
         "vests": "vest",
-        # Machinery aliases
+        "yellow_reflective_vest": "yellow_vest",
+        "white_reflective_vest": "white_vest",
+        "red_reflective_vest": "red_vest",
+        "green_reflective_vest": "green_vest",
+        # Machinery aliases - heavy equipment
         "bulldozer": "excavator",
         "loader": "excavator",
         "vehicle": "truck",
+        "car": "truck",
+        "bus": "truck",
+        "lift": "scissor_lift",
+        "boom": "boom_lift",
+        "cherry_picker": "cherry_picker",
+        "manift": "man_lift",
+        "man_lift": "man_lift",
+        "pallet_truck": "pallet_jack",
+        # Equipment aliases
+        "saw": "circular_saw",
+        "welder": "welding_machine",
+        "cable": "safety_barrier",
+        "fence": "safety_barrier",
+        "barrier": "safety_barrier",
+        "railing": "guardrail",
+        "handrail": "guardrail",
+        "scaffolds": "scaffolding",
+        "ladder": "ladder",
     }
 
     def __init__(

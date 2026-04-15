@@ -26,25 +26,25 @@ class EventLogger:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.path.exists():
             with self.path.open("w", newline="", encoding="utf-8") as file:
-                writer = csv.writer(file)
-                writer.writerow(self._FIELDNAMES)
+                writer = csv.DictWriter(file, fieldnames=self._FIELDNAMES)
+                writer.writeheader()
 
     def log(self, result: FrameResult) -> None:
         if not result.violations:
             return
         with self.path.open("a", newline="", encoding="utf-8") as file:
-            writer = csv.writer(file)
+            writer = csv.DictWriter(file, fieldnames=self._FIELDNAMES)
             for event in result.violations:
                 writer.writerow(
-                    [
-                        event.timestamp.isoformat(),
-                        event.camera_id,
-                        event.person_id,
-                        event.status,
-                        event.severity.value,
-                        event.rule_triggered,
-                        event.reason,
-                        event.score,
-                        f"{event.confidence:.4f}",
-                    ]
+                    {
+                        "timestamp": event.timestamp.isoformat(),
+                        "camera_id": event.camera_id,
+                        "person_id": event.person_id,
+                        "status": event.status,
+                        "severity": event.severity.value,
+                        "rule_triggered": event.rule_triggered,
+                        "reason": event.reason,
+                        "score": event.score,
+                        "confidence": f"{event.confidence:.4f}",
+                    }
                 )

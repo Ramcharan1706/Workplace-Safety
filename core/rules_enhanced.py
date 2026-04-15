@@ -1,4 +1,11 @@
-"""Enhanced rule engine with confidence-weighted soft rules."""
+\"\"\"Enhanced rule engine with confidence-weighted soft rules.
+
+NOTE: This module is currently NOT ACTIVE in the pipeline.
+It is available for future integration. To activate, modify core/pipeline.py
+to pass confidence values and use evaluate_rules_enhanced() instead of evaluate_rules().
+
+See core/rules.py for the currently-active rule engine.
+\"\"\"
 
 from __future__ import annotations
 
