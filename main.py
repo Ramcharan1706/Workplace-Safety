@@ -429,6 +429,78 @@ def run_image_monitoring(
     }
 
 
+def run_browser_camera_monitoring(
+    pipeline: SafetyPipeline,
+    captured_image,
+    alert_manager: AlertManager,
+):
+    try:
+        import cv2
+        import numpy as np
+        from core.overlay import annotate_frame
+    except Exception as exc:
+        st.error(
+            "OpenCV runtime is not available in this environment. "
+            "Please redeploy after dependency installation completes."
+        )
+        st.caption(f"Import detail: {exc}")
+        return None
+
+    if captured_image is None:
+        st.error("No browser camera image captured. Capture an image and try again.")
+        return None
+
+    image_bytes = np.frombuffer(captured_image.getvalue(), dtype=np.uint8)
+    frame_bgr = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+    if frame_bgr is None:
+        st.error("Failed to decode browser camera image. Please capture again.")
+        return None
+
+    analytics = SafetyAnalytics()
+    logger = EventLogger(EVENTS_CSV)
+    checkup_rows: list[dict] = []
+
+    result = pipeline.process_frame(
+        frame_bgr=frame_bgr,
+        camera_id="browser-camera",
+        frame_index=1,
+        fps=0.0,
+    )
+    logger.log(result)
+    analytics.update(result)
+    for item in result.assessments:
+        checkup_rows.append(_to_checkup_row(result, item))
+
+    red_events = [item for item in result.violations if item.severity.value == "red"]
+    if red_events:
+        st.error(
+            alert_manager.trigger(
+                "HIGH RISK: Browser camera frame has dangerous condition(s).",
+                high_risk=True,
+            )
+        )
+    else:
+        st.info("No active high-risk alerts.")
+
+    annotated = annotate_frame(frame_bgr, result)
+    rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+    st.image(rgb, caption="Browser Camera | Processed Frame", use_container_width=True)
+
+    summary = analytics.live_metrics()
+    st.markdown(
+        (
+            f"**Workers:** {summary['total_workers_detected']} | "
+            f"**Violations:** {summary['total_violations']} | "
+            f"**Compliance:** {summary['compliance_rate'] * 100:.2f}%"
+        )
+    )
+
+    return {
+        **analytics.summary(),
+        "checkup_rows": checkup_rows[-1200:],
+    }
+
+
 def render_analytics(summary: dict) -> None:
     st.markdown("<h2 style='color: #f1f5f9; margin-top: 2rem;'>📊 Safety Analytics</h2>", unsafe_allow_html=True)
     
@@ -585,7 +657,13 @@ def app() -> None:
     render_streamlit_frontend(st.session_state["summary_history"])
 
     st.sidebar.header("Monitoring Controls")
-    mode_options = ["Webcam", "Video File", "Multi-Camera Simulation", "Image Folders (safe/unsafe)"]
+    mode_options = [
+        "Webcam (Local Only)",
+        "Browser Camera (All Devices)",
+        "Video File",
+        "Multi-Camera Simulation",
+        "Image Folders (safe/unsafe)",
+    ]
     default_mode_index = 1 if is_cloud_runtime else 0
     mode_label = st.sidebar.selectbox(
         "Input Mode",
@@ -593,14 +671,19 @@ def app() -> None:
         index=default_mode_index,
     )
     mode = {
-        "Webcam": "webcam",
+        "Webcam (Local Only)": "webcam",
+        "Browser Camera (All Devices)": "browser_camera",
         "Video File": "video",
         "Multi-Camera Simulation": "multi",
         "Image Folders (safe/unsafe)": "images",
     }[mode_label]
 
     if is_cloud_runtime and mode == "webcam":
-        st.sidebar.warning("Webcam mode is not supported on Streamlit Cloud. Use Video File or Image Folders.")
+        st.sidebar.warning("Local webcam mode is not supported on Streamlit Cloud. Use Browser Camera, Video File, or Image Folders.")
+
+    browser_capture = None
+    if mode == "browser_camera":
+        browser_capture = st.camera_input("Capture from your device camera")
 
     uploaded = None
     video_path = None
@@ -637,7 +720,7 @@ def app() -> None:
         iou = max(iou, 0.50)
     st.sidebar.caption(f"Effective thresholds -> confidence: {conf:.2f}, IoU: {iou:.2f}")
     seconds = DEFAULT_STREAM_SECONDS
-    if mode != "images":
+    if mode in {"webcam", "video", "multi"}:
         seconds = st.sidebar.slider("Session Duration (seconds)", min_value=5, max_value=120, value=DEFAULT_STREAM_SECONDS, step=5)
 
     camera_count = DEFAULT_MULTI_CAMERA_COUNT
@@ -652,7 +735,7 @@ def app() -> None:
         if not validate_model_path(model_path):
             st.error(f"Model file not found: {model_path}. Please check the path and try again.")
         elif is_cloud_runtime and mode == "webcam":
-            st.error("Webcam input is unavailable in Streamlit Cloud. Select Video File or Image Folders mode.")
+            st.error("Local webcam input is unavailable in Streamlit Cloud. Select Browser Camera, Video File, or Image Folders mode.")
         else:
             summary = None
             with st.spinner("Loading model and processing live frames..."):
@@ -691,6 +774,12 @@ def app() -> None:
                         summary = run_image_monitoring(
                             pipeline=pipeline,
                             image_items=image_items,
+                            alert_manager=alert_manager,
+                        )
+                    elif mode == "browser_camera":
+                        summary = run_browser_camera_monitoring(
+                            pipeline=pipeline,
+                            captured_image=browser_capture,
                             alert_manager=alert_manager,
                         )
                     else:
