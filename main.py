@@ -431,7 +431,7 @@ def run_image_monitoring(
 
 def run_browser_camera_monitoring(
     pipeline: SafetyPipeline,
-    captured_image,
+    captured_images: list[bytes],
     alert_manager: AlertManager,
 ):
     try:
@@ -446,54 +446,62 @@ def run_browser_camera_monitoring(
         st.caption(f"Import detail: {exc}")
         return None
 
-    if captured_image is None:
+    if not captured_images:
         st.error("No browser camera image captured. Capture an image and try again.")
-        return None
-
-    image_bytes = np.frombuffer(captured_image.getvalue(), dtype=np.uint8)
-    frame_bgr = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
-    if frame_bgr is None:
-        st.error("Failed to decode browser camera image. Please capture again.")
         return None
 
     analytics = SafetyAnalytics()
     logger = EventLogger(EVENTS_CSV)
     checkup_rows: list[dict] = []
 
-    result = pipeline.process_frame(
-        frame_bgr=frame_bgr,
-        camera_id="browser-camera",
-        frame_index=1,
-        fps=0.0,
-    )
-    logger.log(result)
-    analytics.update(result)
-    for item in result.assessments:
-        checkup_rows.append(_to_checkup_row(result, item))
+    image_placeholder = st.empty()
+    metrics_placeholder = st.empty()
+    alerts_placeholder = st.empty()
 
-    red_events = [item for item in result.violations if item.severity.value == "red"]
-    if red_events:
-        st.error(
-            alert_manager.trigger(
-                "HIGH RISK: Browser camera frame has dangerous condition(s).",
-                high_risk=True,
+    for frame_index, image_bytes_raw in enumerate(captured_images, start=1):
+        image_bytes = np.frombuffer(image_bytes_raw, dtype=np.uint8)
+        frame_bgr = cv2.imdecode(image_bytes, cv2.IMREAD_COLOR)
+        if frame_bgr is None:
+            continue
+
+        result = pipeline.process_frame(
+            frame_bgr=frame_bgr,
+            camera_id="browser-camera",
+            frame_index=frame_index,
+            fps=0.0,
+        )
+        logger.log(result)
+        analytics.update(result)
+        for item in result.assessments:
+            checkup_rows.append(_to_checkup_row(result, item))
+
+        red_events = [item for item in result.violations if item.severity.value == "red"]
+        if red_events:
+            alerts_placeholder.error(
+                alert_manager.trigger(
+                    f"HIGH RISK: Browser camera frame {frame_index} has dangerous condition(s).",
+                    high_risk=True,
+                )
+            )
+        else:
+            alerts_placeholder.info("No active high-risk alerts.")
+
+        annotated = annotate_frame(frame_bgr, result)
+        rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+        image_placeholder.image(
+            rgb,
+            caption=f"Browser Camera | Frame {frame_index}/{len(captured_images)}",
+            use_container_width=True,
+        )
+
+        summary = analytics.live_metrics()
+        metrics_placeholder.markdown(
+            (
+                f"**Workers:** {summary['total_workers_detected']} | "
+                f"**Violations:** {summary['total_violations']} | "
+                f"**Compliance:** {summary['compliance_rate'] * 100:.2f}%"
             )
         )
-    else:
-        st.info("No active high-risk alerts.")
-
-    annotated = annotate_frame(frame_bgr, result)
-    rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
-    st.image(rgb, caption="Browser Camera | Processed Frame", use_container_width=True)
-
-    summary = analytics.live_metrics()
-    st.markdown(
-        (
-            f"**Workers:** {summary['total_workers_detected']} | "
-            f"**Violations:** {summary['total_violations']} | "
-            f"**Compliance:** {summary['compliance_rate'] * 100:.2f}%"
-        )
-    )
 
     return {
         **analytics.summary(),
@@ -653,6 +661,8 @@ def app() -> None:
         st.session_state["summary_history"] = []
     if "last_checkup_rows" not in st.session_state:
         st.session_state["last_checkup_rows"] = []
+    if "browser_camera_frames" not in st.session_state:
+        st.session_state["browser_camera_frames"] = []
 
     render_streamlit_frontend(st.session_state["summary_history"])
 
@@ -684,6 +694,15 @@ def app() -> None:
     browser_capture = None
     if mode == "browser_camera":
         browser_capture = st.camera_input("Capture from your device camera")
+        st.sidebar.caption(
+            f"Captured Frames Queue: {len(st.session_state['browser_camera_frames'])}"
+        )
+        if browser_capture is not None and st.sidebar.button("Add Captured Frame"):
+            st.session_state["browser_camera_frames"].append(browser_capture.getvalue())
+            st.sidebar.success("Captured frame added to queue.")
+        if st.sidebar.button("Clear Captured Frames"):
+            st.session_state["browser_camera_frames"] = []
+            st.sidebar.info("Captured frame queue cleared.")
 
     uploaded = None
     video_path = None
@@ -777,9 +796,12 @@ def app() -> None:
                             alert_manager=alert_manager,
                         )
                     elif mode == "browser_camera":
+                        captured_images = list(st.session_state["browser_camera_frames"])
+                        if browser_capture is not None and not captured_images:
+                            captured_images.append(browser_capture.getvalue())
                         summary = run_browser_camera_monitoring(
                             pipeline=pipeline,
-                            captured_image=browser_capture,
+                            captured_images=captured_images,
                             alert_manager=alert_manager,
                         )
                     else:
