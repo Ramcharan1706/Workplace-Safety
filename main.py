@@ -6,7 +6,6 @@ import tempfile
 import time
 from pathlib import Path
 
-import cv2
 import pandas as pd
 import streamlit as st
 
@@ -24,12 +23,10 @@ from core.config import (
     SUMMARY_CSV,
 )
 from core.detector import YoloDetector
-from core.overlay import annotate_frame
 from core.pipeline import SafetyPipeline
 from storage.export import export_summary_to_csv
 from storage.logger import EventLogger
 from ui.dashboard import make_trend_figure, make_violation_figure
-from video.sources import build_sources
 
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
@@ -264,6 +261,18 @@ def run_monitoring(
     seconds: int,
     alert_manager: AlertManager,
 ):
+    try:
+        import cv2
+        from core.overlay import annotate_frame
+        from video.sources import build_sources
+    except Exception as exc:
+        st.error(
+            "OpenCV runtime is not available in this environment. "
+            "Please redeploy after dependency installation completes."
+        )
+        st.caption(f"Import detail: {exc}")
+        return None
+
     sources = build_sources(mode=mode, video_path=video_path, camera_count=camera_count)
     if not sources:
         st.error("No active sources available. Select a valid webcam or video input.")
@@ -347,6 +356,17 @@ def run_image_monitoring(
     image_items: list[tuple[str, Path]],
     alert_manager: AlertManager,
 ):
+    try:
+        import cv2
+        from core.overlay import annotate_frame
+    except Exception as exc:
+        st.error(
+            "OpenCV runtime is not available in this environment. "
+            "Please redeploy after dependency installation completes."
+        )
+        st.caption(f"Import detail: {exc}")
+        return None
+
     if not image_items:
         st.error("No images found. Add files to WorkSafety/safe or WorkSafety/unsafe.")
         return None
