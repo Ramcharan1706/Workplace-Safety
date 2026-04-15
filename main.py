@@ -575,6 +575,7 @@ def render_logs_table() -> None:
 def app() -> None:
     st.set_page_config(page_title="AI Workplace Safety Monitoring", layout="wide")
     inject_streamlit_theme()
+    is_cloud_runtime = Path("/mount/src").exists()
 
     if "summary_history" not in st.session_state:
         st.session_state["summary_history"] = []
@@ -584,9 +585,12 @@ def app() -> None:
     render_streamlit_frontend(st.session_state["summary_history"])
 
     st.sidebar.header("Monitoring Controls")
+    mode_options = ["Webcam", "Video File", "Multi-Camera Simulation", "Image Folders (safe/unsafe)"]
+    default_mode_index = 1 if is_cloud_runtime else 0
     mode_label = st.sidebar.selectbox(
         "Input Mode",
-        ["Webcam", "Video File", "Multi-Camera Simulation", "Image Folders (safe/unsafe)"],
+        mode_options,
+        index=default_mode_index,
     )
     mode = {
         "Webcam": "webcam",
@@ -594,6 +598,9 @@ def app() -> None:
         "Multi-Camera Simulation": "multi",
         "Image Folders (safe/unsafe)": "images",
     }[mode_label]
+
+    if is_cloud_runtime and mode == "webcam":
+        st.sidebar.warning("Webcam mode is not supported on Streamlit Cloud. Use Video File or Image Folders.")
 
     uploaded = None
     video_path = None
@@ -644,76 +651,87 @@ def app() -> None:
         # Validate model path early
         if not validate_model_path(model_path):
             st.error(f"Model file not found: {model_path}. Please check the path and try again.")
+        elif is_cloud_runtime and mode == "webcam":
+            st.error("Webcam input is unavailable in Streamlit Cloud. Select Video File or Image Folders mode.")
         else:
+            summary = None
             with st.spinner("Loading model and processing live frames..."):
-                pipeline = build_pipeline(model_path=model_path, conf=conf, iou=iou)
-                detector = pipeline.detector
-                available_classes_fn = getattr(detector, "available_classes", None)
-                if callable(available_classes_fn):
-                    available_classes = available_classes_fn()
-                else:
-                    raw_names = getattr(detector, "_names", {}) or {}
-                    normalize_fn = getattr(detector, "_normalize_label", lambda x: str(x).strip().lower())
-                    available_classes = sorted({normalize_fn(str(name)) for name in raw_names.values()})
-                missing_checks = []
-                if not detector.supports_any_class({"helmet", "hardhat", "hard_hat"}):
-                    missing_checks.append("helmet")
-                if not detector.supports_any_class({"vest", "safety_vest", "safety-vest"}):
-                    missing_checks.append("vest")
-                if missing_checks:
-                    st.warning(
-                        "Current model does not include PPE classes for: "
-                        + ", ".join(missing_checks)
-                        + ". PPE checks for those classes are skipped to avoid false violations."
-                    )
-                    if available_classes:
-                        display_classes = ", ".join(available_classes[:20])
-                        suffix = " ..." if len(available_classes) > 20 else ""
-                        st.caption(f"Model classes detected: {display_classes}{suffix}")
-                    if set(missing_checks) == {"helmet", "vest"}:
-                        st.info(
-                            "This usually means the selected model is a generic detector (for example COCO). "
-                            "Use a PPE-trained YOLO model (best.pt) that includes helmet and vest classes."
+                try:
+                    pipeline = build_pipeline(model_path=model_path, conf=conf, iou=iou)
+                    detector = pipeline.detector
+                    available_classes_fn = getattr(detector, "available_classes", None)
+                    if callable(available_classes_fn):
+                        available_classes = available_classes_fn()
+                    else:
+                        raw_names = getattr(detector, "_names", {}) or {}
+                        normalize_fn = getattr(detector, "_normalize_label", lambda x: str(x).strip().lower())
+                        available_classes = sorted({normalize_fn(str(name)) for name in raw_names.values()})
+                    missing_checks = []
+                    if not detector.supports_any_class({"helmet", "hardhat", "hard_hat"}):
+                        missing_checks.append("helmet")
+                    if not detector.supports_any_class({"vest", "safety_vest", "safety-vest"}):
+                        missing_checks.append("vest")
+                    if missing_checks:
+                        st.warning(
+                            "Current model does not include PPE classes for: "
+                            + ", ".join(missing_checks)
+                            + ". PPE checks for those classes are skipped to avoid false violations."
                         )
-                alert_manager = AlertManager(sound_enabled=sound_enabled)
-                if mode == "images":
-                    summary = run_image_monitoring(
-                        pipeline=pipeline,
-                        image_items=image_items,
-                        alert_manager=alert_manager,
-                    )
-                else:
-                    summary = run_monitoring(
-                        pipeline=pipeline,
-                        mode=mode,
-                        video_path=video_path,
-                        camera_count=camera_count,
-                        seconds=seconds,
-                        alert_manager=alert_manager,
-                    )
+                        if available_classes:
+                            display_classes = ", ".join(available_classes[:20])
+                            suffix = " ..." if len(available_classes) > 20 else ""
+                            st.caption(f"Model classes detected: {display_classes}{suffix}")
+                        if set(missing_checks) == {"helmet", "vest"}:
+                            st.info(
+                                "This usually means the selected model is a generic detector (for example COCO). "
+                                "Use a PPE-trained YOLO model (best.pt) that includes helmet and vest classes."
+                            )
+                    alert_manager = AlertManager(sound_enabled=sound_enabled)
+                    if mode == "images":
+                        summary = run_image_monitoring(
+                            pipeline=pipeline,
+                            image_items=image_items,
+                            alert_manager=alert_manager,
+                        )
+                    else:
+                        summary = run_monitoring(
+                            pipeline=pipeline,
+                            mode=mode,
+                            video_path=video_path,
+                            camera_count=camera_count,
+                            seconds=seconds,
+                            alert_manager=alert_manager,
+                        )
+                except Exception as exc:
+                    st.error("Monitoring failed due to an unexpected runtime error.")
+                    st.caption(f"Error detail: {exc}")
+                    summary = None
 
                 if summary is not None:
                     st.session_state["summary_history"].append(summary)
                     st.session_state["last_checkup_rows"] = summary.get("checkup_rows", [])
-            render_analytics(summary)
+            if summary is not None:
+                render_analytics(summary)
 
-            export_path = export_summary_to_csv(summary, SUMMARY_CSV)
-            csv_bytes = Path(export_path).read_bytes()
-            st.download_button(
-                label="Download Analytics CSV",
-                data=csv_bytes,
-                file_name="analytics_summary.csv",
-                mime="text/csv",
-            )
-
-            if st.session_state["last_checkup_rows"]:
-                checkup_df = pd.DataFrame(st.session_state["last_checkup_rows"])
+                export_path = export_summary_to_csv(summary, SUMMARY_CSV)
+                csv_bytes = Path(export_path).read_bytes()
                 st.download_button(
-                    label="Download Detailed Checkups CSV",
-                    data=checkup_df.to_csv(index=False).encode("utf-8"),
-                    file_name="detailed_checkups.csv",
+                    label="Download Analytics CSV",
+                    data=csv_bytes,
+                    file_name="analytics_summary.csv",
                     mime="text/csv",
                 )
+
+                if st.session_state["last_checkup_rows"]:
+                    checkup_df = pd.DataFrame(st.session_state["last_checkup_rows"])
+                    st.download_button(
+                        label="Download Detailed Checkups CSV",
+                        data=checkup_df.to_csv(index=False).encode("utf-8"),
+                        file_name="detailed_checkups.csv",
+                        mime="text/csv",
+                    )
+            else:
+                st.info("No frames were processed. Please check your input source and try again.")
 
     st.divider()
     if st.session_state["summary_history"]:
