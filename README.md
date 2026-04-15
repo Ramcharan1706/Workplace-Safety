@@ -99,6 +99,27 @@ streamlit run main.py
 This project includes `.streamlit/config.toml` with `fileWatcherType = "none"` to avoid
 PyTorch class-path inspection warnings on some Windows setups.
 
+## Deploy to Streamlit Cloud
+
+This project is configured for seamless deployment to [Streamlit Cloud](https://streamlit.io/cloud):
+
+1. **Push repository to GitHub**
+	- Ensure all files including `requirements.txt`, `packages.txt`, and `.streamlit/config.toml` are committed
+
+2. **Deploy via Streamlit Cloud**
+	- Go to https://share.streamlit.io/
+	- Connect your GitHub repository
+	- Select the repository and branch
+	- Click "Deploy"
+
+3. **Configuration Files Used**
+	- `requirements.txt`: Python dependencies (uses `opencv-python-headless` for headless environments)
+	- `packages.txt`: System-level dependencies for OpenCV (libsm6, libxext6, libgl1-mesa-glx, etc.)
+	- `.streamlit/config.toml`: Optimized settings for Cloud deployment
+	- `runtime.txt`: Specifies Python version (3.12)
+
+**Note:** The app uses headless mode on the cloud, so webcam input will only work when users upload video files or the system accesses video URLs via network streams.
+
 3. In the sidebar
 
 - Select input mode: Webcam, Video File, or Multi-Camera Simulation

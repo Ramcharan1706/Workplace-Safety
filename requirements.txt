@@ -1,7 +1,7 @@
 numpy
 # Use opencv-python for local development with camera access
-# Use opencv-python-headless for production/headless servers
-opencv-python>=4.8.0
+# Use opencv-python-headless for production/headless servers (Streamlit Cloud)
+opencv-python-headless>=4.8.0
 scikit-learn
 scikit-image
 matplotlib
