@@ -114,7 +114,7 @@ This project is configured for seamless deployment to [Streamlit Cloud](https://
 
 3. **Configuration Files Used**
 	- `requirements.txt`: Python dependencies (uses `opencv-python-headless` for headless environments)
-	- `packages.txt`: System-level dependencies for OpenCV (libsm6, libxext6, libgl1-mesa-glx, etc.)
+	- `packages.txt`: System-level dependencies for OpenCV (libsm6, libxext6, libgl1, etc.)
 	- `.streamlit/config.toml`: Optimized settings for Cloud deployment
 	- `runtime.txt`: Specifies Python version (3.12)
 
