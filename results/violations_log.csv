@@ -362,3 +362,46 @@ timestamp,camera_id,person_id,status,severity,rule_triggered,reason,score,confid
 2026-05-11T05:55:45.727860+00:00,cam-1,cam-1-p4,Unsafe,red,R0_LIVE_PPE_MODEL_UNAVAILABLE,PPE model unavailable in live monitoring mode,0,0.6947
 2026-05-11T05:55:45.727860+00:00,cam-1,cam-1-p5,Unsafe,red,R0_LIVE_PPE_MODEL_UNAVAILABLE,PPE model unavailable in live monitoring mode,0,0.5837
 2026-05-11T05:55:45.727860+00:00,cam-1,cam-1-p6,Unsafe,red,R0_LIVE_PPE_MODEL_UNAVAILABLE,PPE model unavailable in live monitoring mode,0,0.4509
+2026-05-11T06:12:59.110748+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8206
+2026-05-11T06:12:59.428256+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.6893
+2026-05-11T06:12:59.851983+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8113
+2026-05-11T06:12:59.851983+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8054
+2026-05-11T06:13:00.266891+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.9119
+2026-05-11T06:13:00.266891+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8479
+2026-05-11T06:13:00.266891+00:00,unsafe-images,unsafe-images-p3,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7901
+2026-05-11T06:13:00.686457+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8262
+2026-05-11T06:13:00.686457+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8214
+2026-05-11T06:13:01.034658+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7167
+2026-05-11T06:13:01.034658+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.4654
+2026-05-11T06:13:01.318939+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8253
+2026-05-11T06:13:01.595664+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7983
+2026-05-11T06:13:01.909203+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.9195
+2026-05-11T06:13:02.203753+00:00,unsafe-images,unsafe-images-p0,Unsafe,red,R0_NO_PERSON_DETECTED,No person detected in unsafe dataset sample,0,0.0000
+2026-05-11T06:13:02.487096+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8112
+2026-05-11T06:13:02.765779+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8406
+2026-05-11T06:13:02.765779+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.6460
+2026-05-11T06:13:03.054284+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8377
+2026-05-11T06:13:03.054284+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8167
+2026-05-11T06:13:03.054284+00:00,unsafe-images,unsafe-images-p3,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7984
+2026-05-11T06:13:03.054284+00:00,unsafe-images,unsafe-images-p4,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.4876
+2026-05-11T06:13:03.342011+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8796
+2026-05-11T06:13:03.635779+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7596
+2026-05-11T06:13:04.047330+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8995
+2026-05-11T06:13:04.047330+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8663
+2026-05-11T06:13:04.047330+00:00,unsafe-images,unsafe-images-p3,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8636
+2026-05-11T06:13:04.047330+00:00,unsafe-images,unsafe-images-p4,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8119
+2026-05-11T06:13:04.494484+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8764
+2026-05-11T06:13:04.494484+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7700
+2026-05-11T06:13:04.494484+00:00,unsafe-images,unsafe-images-p3,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7261
+2026-05-11T06:13:04.894295+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.5579
+2026-05-11T06:13:05.276238+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8818
+2026-05-11T06:13:05.666532+00:00,unsafe-images,unsafe-images-p0,Unsafe,red,R0_NO_PERSON_DETECTED,No person detected in unsafe dataset sample,0,0.0000
+2026-05-11T06:13:06.048858+00:00,unsafe-images,unsafe-images-p0,Unsafe,red,R0_NO_PERSON_DETECTED,No person detected in unsafe dataset sample,0,0.0000
+2026-05-11T06:13:06.448873+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8585
+2026-05-11T06:13:06.448873+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8496
+2026-05-11T06:13:06.448873+00:00,unsafe-images,unsafe-images-p3,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7863
+2026-05-11T06:13:06.448873+00:00,unsafe-images,unsafe-images-p4,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7804
+2026-05-11T06:13:06.797929+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8173
+2026-05-11T06:13:06.797929+00:00,unsafe-images,unsafe-images-p2,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.4807
+2026-05-11T06:13:07.093966+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.8795
+2026-05-11T06:13:07.471859+00:00,unsafe-images,unsafe-images-p1,Unsafe,red,R0_DATASET_UNSAFE,Dataset sample labeled unsafe,0,0.7549

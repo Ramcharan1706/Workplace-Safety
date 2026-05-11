@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from streamlit.components.v1 import html as st_html
 
 from alerts.notifier import AlertManager
 from analytics.aggregator import SafetyAnalytics
@@ -253,6 +254,39 @@ def _read_logs_csv(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def _play_browser_alert_sound() -> None:
+    st_html(
+        """
+        <script>
+        (function () {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) {
+                    return;
+                }
+                const audioContext = new AudioContextClass();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 1320;
+                gainNode.gain.value = 0.08;
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.start();
+                setTimeout(function () {
+                    oscillator.stop();
+                    audioContext.close();
+                }, 220);
+            } catch (error) {
+                console.debug('Alert sound playback failed', error);
+            }
+        })();
+        </script>
+        """,
+        height=0,
+    )
+
+
 def run_monitoring(
     pipeline: SafetyPipeline,
     mode: str,
@@ -338,6 +372,8 @@ def run_monitoring(
 
         if alert_messages:
             alerts_placeholder.error("\n".join(alert_messages))
+            if alert_manager.sound_enabled:
+                _play_browser_alert_sound()
         else:
             alerts_placeholder.info("No active high-risk alerts.")
 
@@ -405,6 +441,8 @@ def run_image_monitoring(
                     high_risk=True,
                 )
             )
+            if alert_manager.sound_enabled:
+                _play_browser_alert_sound()
         else:
             alerts_placeholder.info("No active high-risk alerts.")
 
@@ -486,6 +524,8 @@ def run_browser_camera_monitoring(
                     high_risk=True,
                 )
             )
+            if alert_manager.sound_enabled:
+                _play_browser_alert_sound()
         else:
             alerts_placeholder.info("No active high-risk alerts.")
 
@@ -514,6 +554,20 @@ def run_browser_camera_monitoring(
 
 def render_analytics(summary: dict) -> None:
     st.markdown("<h2 style='color: #f1f5f9; margin-top: 2rem;'>📊 Safety Analytics</h2>", unsafe_allow_html=True)
+
+    session_verdict = str(summary.get("session_verdict", "Inconclusive"))
+    session_reason = str(summary.get("session_reason", "No analysis result available."))
+    verdict_color = "#ef4444" if session_verdict == "Unsafe" else "#10b981" if session_verdict == "Safe" else "#f59e0b"
+    st.markdown(
+        f"""
+        <div class="metric-card" style="margin-bottom: 1rem; border-color: rgba(255,255,255,0.12);">
+            <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Session Verdict</div>
+            <div style="color: {verdict_color}; font-size: 2rem; font-weight: 900; margin-top: 0.35rem;">{session_verdict}</div>
+            <div style="color: #cbd5e1; margin-top: 0.35rem;">{session_reason}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     
     col1, col2, col3 = st.columns(3, gap="medium")
     with col1:

@@ -12,6 +12,9 @@ class SafetyAnalytics:
     def __init__(self) -> None:
         self.total_workers_detected = 0
         self.total_violations = 0
+        self.total_safe_assessments = 0
+        self.total_limited_assessments = 0
+        self.total_warning_assessments = 0
         self.total_helmet_checks = 0
         self.total_helmet_ok = 0
         self.total_vest_checks = 0
@@ -29,6 +32,13 @@ class SafetyAnalytics:
 
         self.total_workers_detected += len(assessments)
         self.total_violations += len(result.violations)
+        for item in assessments:
+            if item.status == "Safe":
+                self.total_safe_assessments += 1
+            elif item.status == "Limited":
+                self.total_limited_assessments += 1
+            elif item.status == "Warning":
+                self.total_warning_assessments += 1
         self.total_helmet_checks += len(assessments)
         self.total_helmet_ok += sum(1 for item in assessments if item.has_helmet)
         self.total_vest_checks += len(assessments)
@@ -68,15 +78,32 @@ class SafetyAnalytics:
     def summary(self) -> dict:
         helmet_rate = self.total_helmet_ok / max(1, self.total_helmet_checks)
         vest_rate = self.total_vest_ok / max(1, self.total_vest_checks)
+        if self.total_violations > 0:
+            session_verdict = "Unsafe"
+            session_reason = "Active red-level violations were detected"
+        elif self.total_workers_detected > 0 and self.total_limited_assessments > 0 and self.total_safe_assessments == 0:
+            session_verdict = "Safe"
+            session_reason = "No active hazards were detected; PPE verification is limited by the current model"
+        elif self.total_workers_detected > 0:
+            session_verdict = "Safe"
+            session_reason = "No active hazards were detected"
+        else:
+            session_verdict = "Inconclusive"
+            session_reason = "No frames were processed"
         return {
             "total_workers_detected": self.total_workers_detected,
             "total_violations": self.total_violations,
+            "total_safe_assessments": self.total_safe_assessments,
+            "total_limited_assessments": self.total_limited_assessments,
+            "total_warning_assessments": self.total_warning_assessments,
             "violation_distribution": dict(self.violation_counter),
             "compliance_rate": self.compliance_rate(),
             "helmet_compliance_rate": helmet_rate,
             "vest_compliance_rate": vest_rate,
             "machinery_exposure_count": self.total_machinery_exposure,
             "machinery_danger_count": self.total_machinery_danger,
+            "session_verdict": session_verdict,
+            "session_reason": session_reason,
             "score_trend": list(self.score_trend),
             "compliance_trend": list(self.compliance_trend),
         }
