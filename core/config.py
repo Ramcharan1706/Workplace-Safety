@@ -40,27 +40,33 @@ CNN_META_FILE = MODELS_DIR / "cnn_mobilenetv2.meta.json"
 DEFAULT_MODEL_PATH = os.getenv("WPS_YOLO_MODEL", "yolov8n.pt")
 
 # Comprehensive support for all helmet and vest colors + machinery types
+# This includes both custom-trained classes and common PPE model class names
 SUPPORTED_CLASSES = {
     # Workers
-    "person",
-    # Helmets - all common colors
-    "helmet", "hardhat",  # generic fallback
+    "person", "worker",
+    # Helmets - all common colors and naming conventions
+    "helmet", "hardhat", "hard_hat", "hard hat",
     "yellow_helmet", "white_helmet", "red_helmet", "orange_helmet", 
     "blue_helmet", "pink_helmet", "green_helmet", "black_helmet", "grey_helmet",
     "yellow_hardhat", "white_hardhat", "red_hardhat", "orange_hardhat",
     "blue_hardhat", "green_hardhat", "black_hardhat",
-    # Safety Vests - all common colors  
-    "vest", "safety_vest",  # generic fallback
+    # Safety Vests - all common colors and naming conventions
+    "vest", "safety_vest", "safety vest", "safety_jacket",
     "orange_vest", "yellow_vest", "white_vest", "red_vest", "green_vest",
     "orange_safety_vest", "yellow_safety_vest", "white_safety_vest",
-    "reflective_vest", "high_visibility_vest", "safety_jacket", "reflective_jacket",
+    "reflective_vest", "high_visibility_vest", "high_visibility_jacket",
+    "safety_jacket", "reflective_jacket", "hi_vis", "hi-vis",
     # Heavy Machinery
-    "machinery", "forklift", "truck", "excavator",
-    "bulldozer", "loader", "crane", "boom_lift",
+    "machinery", "machine", "equipment",
+    "forklift", "truck", "excavator", "vehicle", "car",
+    "bulldozer", "loader", "crane", "boom_lift", "boom lift",
     "scissor_lift", "cherry_picker", "man_lift", "pallet_jack",
-    # Equipment
     "conveyor", "drill_press", "welding_machine", "circular_saw",
-    "scaffolding", "ladder", "guardrail", "safety_barrier",
+    "scaffolding", "ladder", "guardrail", "safety_barrier", "safety barrier",
+    # Common PPE detection model class names
+    "ppl", "people", "hardhat", "no_hardhat",
+    "safety_helmet", "without_helmet", "with_helmet",
+    "PPE", "no_PPE", "proper_PPE", "improper_PPE",
 }
 def _safe_float(key: str, default: str, min_val: float | None = None, max_val: float | None = None) -> float:
     """Safely parse environment variable as float with bounds checking."""

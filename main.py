@@ -304,6 +304,7 @@ def run_monitoring(
                 camera_id=video_frame.camera_id,
                 frame_index=frame_index,
                 fps=fps,
+                source_kind=mode,
             )
             logger.log(result)
             analytics.update(result)
@@ -323,7 +324,7 @@ def run_monitoring(
             placeholders[source_idx].image(
                 rgb,
                 caption=f"{video_frame.camera_id} | Frame {frame_index} | FPS {fps:.2f}",
-                use_container_width=True,
+                width="stretch",
             )
 
         summary = analytics.live_metrics()
@@ -389,6 +390,7 @@ def run_image_monitoring(
             camera_id=f"{group_name}-images",
             frame_index=frame_index,
             fps=0.0,
+            dataset_label=group_name,
         )
         logger.log(result)
         analytics.update(result)
@@ -411,7 +413,7 @@ def run_image_monitoring(
         image_placeholder.image(
             rgb,
             caption=f"{group_name} | {image_path.name} | Item {frame_index}/{len(image_items)}",
-            use_container_width=True,
+            width="stretch",
         )
 
         summary = analytics.live_metrics()
@@ -469,6 +471,7 @@ def run_browser_camera_monitoring(
             camera_id="browser-camera",
             frame_index=frame_index,
             fps=0.0,
+            source_kind="browser",
         )
         logger.log(result)
         analytics.update(result)
@@ -491,7 +494,7 @@ def run_browser_camera_monitoring(
         image_placeholder.image(
             rgb,
             caption=f"Browser Camera | Frame {frame_index}/{len(captured_images)}",
-            use_container_width=True,
+            width="stretch",
         )
 
         summary = analytics.live_metrics()
@@ -552,18 +555,18 @@ def render_analytics(summary: dict) -> None:
 
     st.markdown("<h3 style='color: #cbd5e1; margin-top: 1.5rem;'>Violation Breakdown</h3>", unsafe_allow_html=True)
     fig_dist = make_violation_figure(summary.get("violation_distribution", {}))
-    st.pyplot(fig_dist, use_container_width=True)
+    st.pyplot(fig_dist, width="stretch")
 
     col_trend1, col_trend2 = st.columns(2, gap="medium")
     with col_trend1:
         st.markdown("<h3 style='color: #cbd5e1;'>Safety Score Trend</h3>", unsafe_allow_html=True)
         fig_score = make_trend_figure(summary.get("score_trend", []), "Safety Score Over Time", "Average Safety Score")
-        st.pyplot(fig_score, use_container_width=True)
+        st.pyplot(fig_score, width="stretch")
 
     with col_trend2:
         st.markdown("<h3 style='color: #cbd5e1;'>Compliance Trend</h3>", unsafe_allow_html=True)
         fig_compliance = make_trend_figure(summary.get("compliance_trend", []), "Compliance Over Time", "Compliance Rate")
-        st.pyplot(fig_compliance, use_container_width=True)
+        st.pyplot(fig_compliance, width="stretch")
 
     st.subheader("Helmet, Vest, and Machinery Checkups")
     k1, k2, k3, k4 = st.columns(4)
@@ -589,7 +592,7 @@ def render_checkup_table(checkup_rows: list[dict]) -> None:
         return
     
     col1, col2, col3 = st.columns([1.2, 1.2, 2.0])
-    status_filter = col1.selectbox("Status Filter", ["All", "Safe", "Warning", "Unsafe", "Dangerous"], key="check_status_filter")
+    status_filter = col1.selectbox("Status Filter", ["All", "Safe", "Limited", "Warning", "Unsafe", "Dangerous"], key="check_status_filter")
     danger_only = col2.checkbox("Show Machinery Danger Only", value=False, key="check_danger_only")
     search = col3.text_input("Search Person/Reason", value="", key="check_search")
 
@@ -605,7 +608,7 @@ def render_checkup_table(checkup_rows: list[dict]) -> None:
             | filtered["reason"].str.lower().str.contains(needle, na=False)
         ]
 
-    st.dataframe(filtered.sort_values(by=["timestamp", "camera_id", "person_id"], ascending=[False, True, True]), use_container_width=True)
+    st.dataframe(filtered.sort_values(by=["timestamp", "camera_id", "person_id"], ascending=[False, True, True]), width="stretch")
 
 
 def render_before_after(snapshot_history: list[dict]) -> None:
@@ -637,7 +640,7 @@ def render_logs_table() -> None:
         text = str(value).strip().lower()
         if text in {"unsafe", "dangerous", "danger", "red"}:
             return "color: #ff3b30; font-weight: 700"
-        if text in {"warning", "yellow", "amber"}:
+        if text in {"warning", "yellow", "amber", "limited"}:
             return "color: #ffb020; font-weight: 600"
         if text in {"safe", "green"}:
             return "color: #2ecc71; font-weight: 600"
@@ -649,7 +652,7 @@ def render_logs_table() -> None:
     if "severity" in logs.columns:
         styled = styled.map(_status_style, subset=["severity"])
 
-    st.dataframe(styled, use_container_width=True)
+    st.dataframe(styled, width="stretch")
 
 
 def app() -> None:
@@ -761,33 +764,6 @@ def app() -> None:
                 try:
                     pipeline = build_pipeline(model_path=model_path, conf=conf, iou=iou)
                     detector = pipeline.detector
-                    available_classes_fn = getattr(detector, "available_classes", None)
-                    if callable(available_classes_fn):
-                        available_classes = available_classes_fn()
-                    else:
-                        raw_names = getattr(detector, "_names", {}) or {}
-                        normalize_fn = getattr(detector, "_normalize_label", lambda x: str(x).strip().lower())
-                        available_classes = sorted({normalize_fn(str(name)) for name in raw_names.values()})
-                    missing_checks = []
-                    if not detector.supports_any_class({"helmet", "hardhat", "hard_hat"}):
-                        missing_checks.append("helmet")
-                    if not detector.supports_any_class({"vest", "safety_vest", "safety-vest"}):
-                        missing_checks.append("vest")
-                    if missing_checks:
-                        st.warning(
-                            "Current model does not include PPE classes for: "
-                            + ", ".join(missing_checks)
-                            + ". PPE checks for those classes are skipped to avoid false violations."
-                        )
-                        if available_classes:
-                            display_classes = ", ".join(available_classes[:20])
-                            suffix = " ..." if len(available_classes) > 20 else ""
-                            st.caption(f"Model classes detected: {display_classes}{suffix}")
-                        if set(missing_checks) == {"helmet", "vest"}:
-                            st.info(
-                                "This usually means the selected model is a generic detector (for example COCO). "
-                                "Use a PPE-trained YOLO model (best.pt) that includes helmet and vest classes."
-                            )
                     alert_manager = AlertManager(sound_enabled=sound_enabled)
                     if mode == "images":
                         summary = run_image_monitoring(
@@ -853,9 +829,6 @@ def app() -> None:
 
     st.divider()
     render_checkup_table(st.session_state["last_checkup_rows"])
-
-    st.markdown("### Deployment")
-    st.code("streamlit run main.py", language="bash")
 
 
 if __name__ == "__main__":

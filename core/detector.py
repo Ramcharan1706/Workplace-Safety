@@ -90,8 +90,20 @@ class YoloDetector:
 
     @staticmethod
     def _normalize_label(label: str) -> str:
+        """Normalize label by applying aliases and standard transformations."""
         normalized = label.strip().lower().replace("-", "_").replace(" ", "_")
         return YoloDetector._ALIASES.get(normalized, normalized)
+
+    @staticmethod
+    def _is_ppe_related(label: str) -> bool:
+        """Check if a label relates to PPE (helmet, vest) or machinery."""
+        normalized = label.lower()
+        ppe_keywords = {
+            "helmet", "hard_hat", "hardhat", "vest", "safety", "ppe",
+            "machinery", "excavator", "forklift", "truck", "crane", 
+            "lift", "bulldozer", "loader", "vehicle", "equipment"
+        }
+        return any(keyword in normalized for keyword in ppe_keywords)
 
     def available_classes(self) -> list[str]:
         if self._model is None:
@@ -139,11 +151,18 @@ class YoloDetector:
 
         for box in boxes:
             cls_id = int(box.cls.item())
-            label = self._normalize_label(str(self._names.get(cls_id, cls_id)))
-            if label not in SUPPORTED_CLASSES:
+            raw_label = str(self._names.get(cls_id, cls_id))
+            normalized_label = self._normalize_label(raw_label)
+            
+            # Keep detections if:
+            # 1. They match SUPPORTED_CLASSES exactly, OR
+            # 2. They're PPE/machinery-related (more flexible for different models)
+            if normalized_label not in SUPPORTED_CLASSES and not self._is_ppe_related(raw_label):
                 continue
+            
             confidence = float(box.conf.item())
             x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].tolist()]
-            detections.append(Detection(label=label, confidence=confidence, bbox=(x1, y1, x2, y2)))
+            detections.append(Detection(label=normalized_label, confidence=confidence, bbox=(x1, y1, x2, y2)))
         return detections
+
 
